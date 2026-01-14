@@ -1,0 +1,244 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../js';
+
+@theme {
+    /* Font */
+    --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-bengali: 'Noto Sans Bengali', 'Poppins', ui-sans-serif, system-ui, sans-serif;
+
+    /* Colors */
+    --color-background: hsl(220 20% 97%);
+    --color-foreground: hsl(230 25% 15%);
+
+    --color-card: hsl(0 0% 100%);
+    --color-card-foreground: hsl(230 25% 15%);
+
+    --color-popover: hsl(0 0% 100%);
+    --color-popover-foreground: hsl(230 25% 15%);
+
+    --color-primary: hsl(234 89% 54%);
+    --color-primary-foreground: hsl(0 0% 100%);
+
+    --color-secondary: hsl(220 20% 94%);
+    --color-secondary-foreground: hsl(230 25% 15%);
+
+    --color-muted: hsl(220 15% 92%);
+    --color-muted-foreground: hsl(220 10% 45%);
+
+    --color-accent: hsl(160 84% 45%);
+    --color-accent-foreground: hsl(0 0% 100%);
+
+    --color-success: hsl(160 84% 45%);
+    --color-success-foreground: hsl(0 0% 100%);
+
+    --color-warning: hsl(45 100% 51%);
+    --color-warning-foreground: hsl(230 25% 15%);
+
+    --color-destructive: hsl(0 84% 60%);
+    --color-destructive-foreground: hsl(0 0% 100%);
+
+    --color-border: hsl(220 15% 88%);
+    --color-input: hsl(220 15% 88%);
+    --color-ring: hsl(234 89% 54%);
+
+    --radius: 0.75rem;
+}
+
+@layer base {
+    * {
+        border-color: var(--color-border);
+    }
+
+    body {
+        background-color: var(--color-background);
+        color: var(--color-foreground);
+        font-family: var(--font-sans);
+    }
+}
+
+@layer utilities {
+    .glow-primary {
+        box-shadow: 0 0 20px hsl(234 89% 54% / 0.4);
+    }
+
+    .glow-accent {
+        box-shadow: 0 0 20px hsl(160 84% 45% / 0.4);
+    }
+
+    .card-shadow {
+        box-shadow: 0 4px 20px hsl(230 25% 15% / 0.08);
+    }
+
+    .gradient-bg {
+        background: linear-gradient(135deg, hsl(234 89% 54% / 0.05) 0%, hsl(160 84% 45% / 0.05) 100%);
+    }
+
+    .text-gradient {
+        background: linear-gradient(135deg, hsl(234 89% 54%) 0%, hsl(280 80% 55%) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    @keyframes slide-up {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes scale-in {
+        from {
+            transform: scale(0.9);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% {
+            box-shadow: 0 0 20px hsl(234 89% 54% / 0.4);
+        }
+        50% {
+            box-shadow: 0 0 30px hsl(234 89% 54% / 0.6);
+        }
+    }
+
+    .animate-slide-up {
+        animation: slide-up 0.5s ease-out;
+    }
+
+    .animate-scale-in {
+        animation: scale-in 0.3s ease-out;
+    }
+
+    .animate-float {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .animate-pulse-glow {
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    /* Color utilities for Tailwind classes */
+    .bg-background {
+        background-color: var(--color-background);
+    }
+
+    .text-foreground {
+        color: var(--color-foreground);
+    }
+
+    .bg-card {
+        background-color: var(--color-card);
+    }
+
+    .text-card-foreground {
+        color: var(--color-card-foreground);
+    }
+
+    .bg-primary {
+        background-color: var(--color-primary);
+    }
+
+    .text-primary {
+        color: var(--color-primary);
+    }
+
+    .bg-primary-foreground {
+        background-color: var(--color-primary-foreground);
+    }
+
+    .text-primary-foreground {
+        color: var(--color-primary-foreground);
+    }
+
+    .bg-secondary {
+        background-color: var(--color-secondary);
+    }
+
+    .text-secondary {
+        color: var(--color-secondary);
+    }
+
+    .text-secondary-foreground {
+        color: var(--color-secondary-foreground);
+    }
+
+    .bg-muted {
+        background-color: var(--color-muted);
+    }
+
+    .text-muted-foreground {
+        color: var(--color-muted-foreground);
+    }
+
+    .bg-accent {
+        background-color: var(--color-accent);
+    }
+
+    .text-accent {
+        color: var(--color-accent);
+    }
+
+    .text-accent-foreground {
+        color: var(--color-accent-foreground);
+    }
+
+    .bg-success {
+        background-color: var(--color-success);
+    }
+
+    .text-success {
+        color: var(--color-success);
+    }
+
+    .bg-warning {
+        background-color: var(--color-warning);
+    }
+
+    .text-warning {
+        color: var(--color-warning);
+    }
+
+    .bg-destructive {
+        background-color: var(--color-destructive);
+    }
+
+    .text-destructive {
+        color: var(--color-destructive);
+    }
+
+    .text-destructive-foreground {
+        color: var(--color-destructive-foreground);
+    }
+
+    .border-border {
+        border-color: var(--color-border);
+    }
+
+    .border-input {
+        border-color: var(--color-input);
+    }
+}
