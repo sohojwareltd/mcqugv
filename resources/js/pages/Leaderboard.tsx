@@ -1,6 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { Trophy, Search, Medal, Sparkles, ArrowLeft, Clock } from 'lucide-react';
+import { Trophy, Search, Medal, Sparkles, ArrowLeft, Clock, Calendar } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -110,6 +110,41 @@ export default function Leaderboard({ currentExam, nextExam, previousExams }: Le
         <>
             <Head title="Merit List - UGV Quiz" />
             <div className="min-h-screen gradient-bg">
+                {/* Subtle UGV Branding Bar */}
+                <div className="bg-card/50 backdrop-blur-sm border-b border-border/50">
+                    <div className="container mx-auto px-4 py-2">
+                        <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+                            <img 
+                                src="/UGV-Logo-02.png" 
+                                alt="UGV" 
+                                className="h-6 w-auto object-contain opacity-80"
+                            />
+                            <span className="hidden sm:inline">University of Global Village, Barishal</span>
+                            <span className="hidden md:inline">•</span>
+                            <a href="tel:01763877777" className="hidden md:inline hover:text-primary transition-colors">
+                                01763877777
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Subtle Admission Notice */}
+                <div className="bg-primary/5 border-b border-primary/10">
+                    <div className="container mx-auto px-4 py-2">
+                        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                            <Calendar className="w-3 h-3 text-primary" />
+                            <span className="font-bengali" style={{ fontFamily: 'var(--font-bengali)' }}>
+                                Winter 2026 Admission Fair: জানুয়ারি ১৪-২৪ | 
+                            </span>
+                            <span className="text-primary font-semibold">Up to 100% Scholarship</span>
+                            <span className="hidden sm:inline">•</span>
+                            <a href="https://www.ugv.edu.bd" target="_blank" rel="noopener noreferrer" className="hidden sm:inline hover:text-primary transition-colors">
+                                www.ugv.edu.bd
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Header */}
                 <div className="bg-primary text-primary-foreground py-8 md:py-12">
                     <div className="container mx-auto px-4 text-center">
