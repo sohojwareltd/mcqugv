@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Brain, Clock, Trophy, ArrowRight, Sparkles, Users, Medal, Calendar, AlertTriangle, Shield, Ban, Monitor, CheckCircle } from 'lucide-react';
+import { Brain, Clock, Trophy, ArrowRight, Sparkles, Users, Medal, Calendar, AlertTriangle, Shield, Ban, Monitor, CheckCircle, Facebook } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { AnimatedCounter } from '../components/AnimatedCounter';
@@ -102,10 +102,23 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
             }
             
             if (exam.result_publish_at) {
+                const publishDate = new Date(exam.result_publish_at);
+                const formattedDate = publishDate.toLocaleDateString('en-US', { 
+                    month: 'long', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                });
+                const formattedTime = publishDate.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
                 timers.push({
                     type: 'result_publish' as const,
-                    targetDate: new Date(exam.result_publish_at),
-                    label: 'Results publish in',
+                    targetDate: publishDate,
+                    label: 'The results are published daily at 12:00 AM on our Facebook page.',
+                    publishDate: formattedDate,
+                    publishTime: formattedTime,
                 });
             }
             
@@ -243,8 +256,21 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
                                     // Multiple timers (for ended exam)
                                     timerInfo.map((timer, index) => (
                                         <div key={index} className="flex justify-center">
-                                            <div className="text-center">
-                                                <p className="text-muted-foreground mb-4">{timer.label}:</p>
+                                            <div className="text-center max-w-2xl">
+                                                {timer.type === 'result_publish' ? (
+                                                    <>
+                                                     
+                                                        <p className="text-xs md:text-sm text-muted-foreground mb-1"> The results are published daily at 12:00 AM on our <a href="https://www.facebook.com/ugvbarisal" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold inline-flex items-center gap-1"><Facebook className="w-3 h-3" />Facebook page</a>.  </p>
+                                                        <p className="text-foreground font-semibold mb-2">
+                                                            Results will be published on the website at{' '}
+                                                            <span className="text-primary">{timer.publishTime}</span> on{' '}
+                                                            <span className="text-primary">{timer.publishDate}</span>
+                                                        </p>
+                                                        <p className="text-muted-foreground mb-4 text-sm">Countdown:</p>
+                                                    </>
+                                                ) : (
+                                                    <p className="text-muted-foreground mb-4">{timer.label}:</p>
+                                                )}
                                                 <div className="flex justify-center">
                                                     <CountdownTimer targetDate={timer.targetDate} />
                                                 </div>
@@ -255,8 +281,20 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
                                     // Single timer
                                     timerInfo && (
                                         <div className="flex justify-center">
-                                            <div className="text-center">
-                                                <p className="text-muted-foreground mb-4">{timerInfo.label}:</p>
+                                            <div className="text-center max-w-2xl">
+                                                {timerInfo.label && timerInfo.label.includes('Results will be published') && (timerInfo as any).publishDate ? (
+                                                    <>
+                                                        <p className="text-foreground font-semibold mb-2">
+                                                            Results will be published on the website at{' '}
+                                                            <span className="text-primary">{(timerInfo as any).publishTime}</span> on{' '}
+                                                            <span className="text-primary">{(timerInfo as any).publishDate}</span>
+                                                        </p>
+                                                        <p className="text-xs md:text-sm text-muted-foreground mb-1"> The results are published daily at 12:00 AM on our <a href="https://www.facebook.com/ugvbarisal" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold inline-flex items-center gap-1"><Facebook className="w-3 h-3" />Facebook page</a>.  </p>
+                                                        <p className="text-muted-foreground mb-4 text-sm">Countdown:</p>
+                                                    </>
+                                                ) : (
+                                                    <p className="text-muted-foreground mb-4">{timerInfo.label}:</p>
+                                                )}
                                                 <div className="flex justify-center">
                                                     <CountdownTimer targetDate={timerInfo.targetDate} />
                                                 </div>

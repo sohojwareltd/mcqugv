@@ -1,6 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { Trophy, Search, Medal, Sparkles, ArrowLeft, Clock, Calendar } from 'lucide-react';
+import { Trophy, Search, Medal, Sparkles, ArrowLeft, Clock, Calendar, Facebook } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -95,9 +95,21 @@ export default function Leaderboard({ currentExam, nextExam, previousExams }: Le
         if (currentExam?.result_publish_at && activeTab === 'current') {
             const publishDate = new Date(currentExam.result_publish_at);
             if (publishDate > new Date()) {
+                const formattedDate = publishDate.toLocaleDateString('en-US', { 
+                    month: 'long', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                });
+                const formattedTime = publishDate.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
                 return {
-                    label: 'Results Publish In',
+                    label: 'The results are published daily at 12:00 AM on our Facebook page.',
                     targetDate: publishDate,
+                    publishDate: formattedDate,
+                    publishTime: formattedTime,
                 };
             }
         }
@@ -218,8 +230,20 @@ export default function Leaderboard({ currentExam, nextExam, previousExams }: Le
                                     </p>
                                     {timerInfo && (
                                         <div className="mt-6 flex justify-center">
-                                            <div className="text-center">
-                                                <p className="text-sm md:text-base text-muted-foreground mb-3">{timerInfo.label}</p>
+                                            <div className="text-center max-w-2xl">
+                                                {timerInfo.label && timerInfo.label.includes('Results will be published') && (timerInfo as any).publishDate ? (
+                                                    <>
+                                                        <p className="text-sm md:text-base font-semibold text-foreground mb-2">
+                                                            Results will be published on the website at{' '}
+                                                            <span className="text-primary">{(timerInfo as any).publishTime}</span> on{' '}
+                                                            <span className="text-primary">{(timerInfo as any).publishDate}</span>
+                                                        </p>
+                                                        <p className="text-xs md:text-sm text-muted-foreground mb-1"> The results are published daily at 12:00 AM on our <a href="https://www.facebook.com/ugvbarisal" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold inline-flex items-center gap-1"><Facebook className="w-3 h-3" />Facebook page</a>.  </p>
+                                                        <p className="text-sm md:text-base text-muted-foreground mb-3 mt-2">Countdown:</p>
+                                                    </>
+                                                ) : (
+                                                    <p className="text-sm md:text-base text-muted-foreground mb-3">{timerInfo.label}</p>
+                                                )}
                                                 <CountdownTimer targetDate={timerInfo.targetDate} />
                                             </div>
                                         </div>
