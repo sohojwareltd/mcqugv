@@ -86,7 +86,7 @@ export default function ExamForm({ exam }: ExamFormProps) {
 
         try {
             const response = await api.post('/start', formData);
-            router.visit(`/exam/${response.data.token}/rules`);
+            router.visit(`/exam/${response.data.token}`);
         } catch (err: any) {
             if (err.response?.status === 409 && err.response?.data?.token) {
                 // Already participated

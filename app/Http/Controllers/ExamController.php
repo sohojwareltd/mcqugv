@@ -218,10 +218,12 @@ class ExamController extends Controller
             ->orderBy('start_time', 'asc')
             ->first();
 
-        // Get all previous exams with published results (result_publish_at <= now or null)
+        // Get all previous exams that have ENDED and have published results (result_publish_at <= now or null)
+        // Only show exams that have ended (end_time < now) to prevent showing leaderboard before exam ends
         $previousExams = Exam::whereHas('participants', function ($query) {
                 $query->whereNotNull('completed_at');
             })
+            ->where('end_time', '<', $now) // Only show exams that have ended
             ->where(function ($query) use ($now) {
                 $query->whereNull('result_publish_at')
                     ->orWhere('result_publish_at', '<=', $now);
