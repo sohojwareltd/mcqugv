@@ -11,31 +11,95 @@ class ExamController extends Controller
 {
     public function home(): Response
     {
-        $activeExam = Exam::where('is_active', true)->first();
-        $participantCount = Participant::whereNotNull('completed_at')->count();
+        $now = now();
+        
+        // Get current active exam (within active hours: start_time <= now <= end_time)
+        $currentExam = Exam::where('is_active', true)
+            ->where('start_time', '<=', $now)
+            ->where('end_time', '>=', $now)
+            ->first();
+
+        // Get next upcoming exam (start_time > now)
+        $nextExam = Exam::where('is_active', true)
+            ->where('start_time', '>', $now)
+            ->orderBy('start_time', 'asc')
+            ->first();
+
+        // Get most recent ended exam (end_time < now)
+        $endedExam = Exam::where('is_active', true)
+            ->where('end_time', '<', $now)
+            ->orderBy('end_time', 'desc')
+            ->first();
+
+        // Determine which exam to show and its status
+        // Priority: current exam > ended exam (with next exam info) > next exam
+        $examToShow = null;
+        $examStatus = null;
+        $examData = null;
+        $participantCount = 0;
+
+        if ($currentExam) {
+            // Show current active exam
+            $examToShow = $currentExam;
+            $examStatus = 'active';
+            $participantCount = Participant::where('exam_id', $currentExam->id)->whereNotNull('completed_at')->count();
+        } elseif ($endedExam) {
+            // Show most recent ended exam (prioritize showing ended exam over next exam)
+            $examToShow = $endedExam;
+            $examStatus = 'ended';
+            $participantCount = Participant::where('exam_id', $endedExam->id)->whereNotNull('completed_at')->count();
+        } elseif ($nextExam) {
+            // Show next upcoming exam if no ended exam
+            $examToShow = $nextExam;
+            $examStatus = 'upcoming';
+            $participantCount = 0;
+        }
+
+        if ($examToShow) {
+            $examData = [
+                'id' => $examToShow->id,
+                'title' => $examToShow->title,
+                'total_questions' => $examToShow->total_questions,
+                'start_time' => $examToShow->start_time?->toIso8601String(),
+                'end_time' => $examToShow->end_time?->toIso8601String(),
+                'result_publish_at' => $examToShow->result_publish_at?->toIso8601String(),
+                'status' => $examStatus,
+            ];
+
+            // Add next exam info if current exam is ended and next exam exists
+            if ($examStatus === 'ended' && $nextExam) {
+                $examData['next_exam'] = [
+                    'id' => $nextExam->id,
+                    'title' => $nextExam->title,
+                    'start_time' => $nextExam->start_time?->toIso8601String(),
+                ];
+            }
+        }
 
         // Get the most recent completed exam (previous exam) for leaderboard
         $previousExam = Exam::whereHas('participants', function ($query) {
                 $query->whereNotNull('completed_at');
             })
             ->withCount('participants')
-            ->orderBy('updated_at', 'desc')
+            ->orderBy('end_time', 'desc')
             ->first();
 
         $previousLeaderboard = null;
         if ($previousExam) {
             $participants = Participant::where('exam_id', $previousExam->id)
                 ->whereNotNull('completed_at')
-                ->orderBy('score', 'desc')
-                ->orderBy('completed_at', 'asc')
+                ->when(
+                    Participant::where('exam_id', $previousExam->id)->whereNotNull('rank')->exists(),
+                    fn ($query) => $query->orderBy('rank', 'asc'),
+                    fn ($query) => $query->orderBy('score', 'desc')->orderBy('completed_at', 'asc')
+                )
                 ->limit(10) // Top 10 for display
                 ->get()
                 ->map(function ($participant, $index) {
                     return [
-                        'rank' => $index + 1,
+                        'rank' => $participant->rank ?? ($index + 1),
                         'full_name' => $participant->full_name,
-                        'phone' => $participant->phone,
-                        'score' => $participant->score,
+                        'hsc_roll' => $participant->hsc_roll,
                     ];
                 });
 
@@ -50,20 +114,33 @@ class ExamController extends Controller
         }
 
         return Inertia::render('Home', [
-            'exam' => $activeExam ? [
-                'id' => $activeExam->id,
-                'title' => $activeExam->title,
-                'total_questions' => $activeExam->total_questions,
-                'result_publish_at' => $activeExam->result_publish_at?->toIso8601String(),
-            ] : null,
-            'participantCount' => $participantCount + 12430, // Base count for display
+            'exam' => $examData,
+            'participantCount' => ($participantCount ?? 0) + 12430, // Base count for display
             'previousLeaderboard' => $previousLeaderboard,
         ]);
     }
 
     public function form(): Response
     {
-        return Inertia::render('ExamForm');
+        $now = now();
+        
+        // Get current active exam (within active hours)
+        $activeExam = Exam::where('is_active', true)
+            ->where('start_time', '<=', $now)
+            ->where('end_time', '>=', $now)
+            ->first();
+
+        if (!$activeExam) {
+            // Redirect to home if no active exam
+            return redirect()->route('home');
+        }
+
+        return Inertia::render('ExamForm', [
+            'exam' => [
+                'id' => $activeExam->id,
+                'title' => $activeExam->title,
+            ],
+        ]);
     }
 
     public function rules(string $token): Response
@@ -127,9 +204,71 @@ class ExamController extends Controller
 
     public function leaderboard(): Response
     {
-        $activeExam = Exam::where('is_active', true)->first();
+        $now = now();
+        
+        // Get current active exam (within active hours)
+        $currentExam = Exam::where('is_active', true)
+            ->where('start_time', '<=', $now)
+            ->where('end_time', '>=', $now)
+            ->first();
+
+        // Get next upcoming exam
+        $nextExam = Exam::where('is_active', true)
+            ->where('start_time', '>', $now)
+            ->orderBy('start_time', 'asc')
+            ->first();
+
+        // Get all previous exams with published results (result_publish_at <= now or null)
+        $previousExams = Exam::whereHas('participants', function ($query) {
+                $query->whereNotNull('completed_at');
+            })
+            ->where(function ($query) use ($now) {
+                $query->whereNull('result_publish_at')
+                    ->orWhere('result_publish_at', '<=', $now);
+            })
+            ->orderBy('end_time', 'desc')
+            ->get()
+            ->map(function ($exam) {
+                $participants = Participant::where('exam_id', $exam->id)
+                    ->whereNotNull('completed_at')
+                    ->when(
+                        Participant::where('exam_id', $exam->id)->whereNotNull('rank')->exists(),
+                        fn ($query) => $query->orderBy('rank', 'asc'),
+                        fn ($query) => $query->orderBy('score', 'desc')->orderBy('completed_at', 'asc')
+                    )
+                    ->get()
+                    ->map(function ($participant, $index) {
+                        return [
+                            'rank' => $participant->rank ?? ($index + 1),
+                            'merit_position' => $participant->merit_position ?? ($index + 1),
+                            'full_name' => $participant->full_name,
+                            'hsc_roll' => $participant->hsc_roll,
+                            'score' => $participant->score,
+                            'completed_at' => $participant->completed_at->toIso8601String(),
+                        ];
+                    });
+
+                return [
+                    'id' => $exam->id,
+                    'title' => $exam->title,
+                    'end_time' => $exam->end_time?->toIso8601String(),
+                    'result_publish_at' => $exam->result_publish_at?->toIso8601String(),
+                    'participants' => $participants,
+                ];
+            });
+
         return Inertia::render('Leaderboard', [
-            'examId' => $activeExam?->id ?? 1,
+            'currentExam' => $currentExam ? [
+                'id' => $currentExam->id,
+                'title' => $currentExam->title,
+                'result_publish_at' => $currentExam->result_publish_at?->toIso8601String(),
+            ] : null,
+            'nextExam' => $nextExam ? [
+                'id' => $nextExam->id,
+                'title' => $nextExam->title,
+                'start_time' => $nextExam->start_time?->toIso8601String(),
+            ] : null,
+            'previousExams' => $previousExams,
         ]);
     }
 }

@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 
 interface AnimatedCounterProps {
     end: number;
+    start?: number;
     duration?: number;
     prefix?: string;
     suffix?: string;
 }
 
-export const AnimatedCounter = ({ end, duration = 2000, prefix = '', suffix = '' }: AnimatedCounterProps) => {
-    const [count, setCount] = useState(0);
+export const AnimatedCounter = ({ end, start = 0, duration = 2000, prefix = '', suffix = '' }: AnimatedCounterProps) => {
+    const [count, setCount] = useState(start);
 
     useEffect(() => {
         let startTime: number;
@@ -20,7 +21,8 @@ export const AnimatedCounter = ({ end, duration = 2000, prefix = '', suffix = ''
 
             // Easing function for smooth animation
             const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-            setCount(Math.floor(easeOutQuart * end));
+            const range = end - start;
+            setCount(Math.floor(start + easeOutQuart * range));
 
             if (progress < 1) {
                 animationFrame = requestAnimationFrame(animate);
@@ -29,7 +31,7 @@ export const AnimatedCounter = ({ end, duration = 2000, prefix = '', suffix = ''
 
         animationFrame = requestAnimationFrame(animate);
         return () => cancelAnimationFrame(animationFrame);
-    }, [end, duration]);
+    }, [end, start, duration]);
 
     return (
         <span className="tabular-nums">

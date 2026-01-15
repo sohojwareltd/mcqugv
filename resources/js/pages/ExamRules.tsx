@@ -17,14 +17,14 @@ export default function ExamRules({ token }: ExamRulesProps) {
 
     return (
         <>
-            <Head title="Exam Rules - MeritSpark" />
+            <Head title="Exam Rules - UGV Quiz" />
             <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
                 <div className="w-full max-w-3xl">
                     {/* Header */}
                     <div className="text-center mb-8">
                         <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
                             <Sparkles className="w-4 h-4 text-primary" />
-                            <span className="font-semibold text-primary">MeritSpark</span>
+                            <span className="font-semibold text-primary">UGV Quiz</span>
                         </div>
                         <h1 className="text-3xl md:text-4xl font-bold mb-2">Exam Rules & Guidelines</h1>
                         <p className="text-muted-foreground">Please read carefully before starting</p>

@@ -20,6 +20,8 @@ class Participant extends Model
         'started_at',
         'completed_at',
         'score',
+        'rank',
+        'merit_position',
         'ip_address',
     ];
 
@@ -27,6 +29,8 @@ class Participant extends Model
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
         'score' => 'integer',
+        'rank' => 'integer',
+        'merit_position' => 'integer',
     ];
 
     public function exam(): BelongsTo

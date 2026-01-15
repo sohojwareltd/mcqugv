@@ -1,0 +1,77 @@
+# Laravel + Filament Nginx Configuration
+# Place this in /etc/nginx/sites-available/your-site
+# Then symlink: sudo ln -s /etc/nginx/sites-available/your-site /etc/nginx/sites-enabled/
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name your-domain.com;
+    root /path/to/your/project/public;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php;
+
+    charset utf-8;
+
+    # Logging
+    access_log /var/log/nginx/your-site-access.log;
+    error_log /var/log/nginx/your-site-error.log;
+
+    # Main location block - handles all requests
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # CRITICAL: Handle Livewire routes properly
+    # Filament uses Livewire which POSTs to /livewire/update
+    location ~ ^/livewire/ {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # Handle Filament admin routes
+    location ~ ^/admin/ {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # PHP-FPM configuration
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;  # Adjust PHP version as needed
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+        
+        # CRITICAL: These are essential for POST requests and Livewire
+        fastcgi_param REQUEST_METHOD $request_method;
+        fastcgi_param CONTENT_TYPE $content_type;
+        fastcgi_param CONTENT_LENGTH $content_length;
+        
+        # Increase timeouts for Livewire requests
+        fastcgi_read_timeout 300;
+        fastcgi_send_timeout 300;
+        
+        # Buffer settings
+        fastcgi_buffer_size 128k;
+        fastcgi_buffers 256 16k;
+        fastcgi_busy_buffers_size 256k;
+        fastcgi_temp_file_write_size 256k;
+    }
+
+    # Deny access to hidden files
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+
+    # Static assets caching
+    location ~* \.(jpg|jpeg|gif|png|css|js|ico|xml|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    # Increase client body size for file uploads
+    client_max_body_size 20M;
+    
+    # Increase buffer sizes for large requests
+    client_body_buffer_size 128k;
+}

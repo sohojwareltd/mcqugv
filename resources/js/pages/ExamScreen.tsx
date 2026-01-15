@@ -433,7 +433,7 @@ export default function ExamScreen({ token }: { token: string }) {
 
     return (
         <>
-            <Head title="Exam - MeritSpark" />
+            <Head title="Exam - UGV Quiz" />
             <div className="min-h-screen gradient-bg">
                 {/* Warning Modal */}
                 {showWarning && (
@@ -472,7 +472,7 @@ export default function ExamScreen({ token }: { token: string }) {
                     <div className="container mx-auto px-4 py-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <span className="font-semibold text-primary">MeritSpark</span>
+                                <span className="font-semibold text-primary">UGV Quiz</span>
                                 <span className="text-sm text-muted-foreground hidden sm:inline">
                                     Question {progress.current} of {progress.total}
                                 </span>

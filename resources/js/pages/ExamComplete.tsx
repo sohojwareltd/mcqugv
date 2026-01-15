@@ -47,13 +47,13 @@ export default function ExamComplete({ token, resultPublishAt }: Props) {
 
     return (
         <>
-            <Head title="Exam Complete - MeritSpark" />
+            <Head title="Exam Complete - UGV Quiz" />
             <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
                 <div className="max-w-md w-full text-center">
                     {/* Logo */}
                     <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-6 animate-slide-up">
                         <Sparkles className="w-4 h-4 text-primary" />
-                        <span className="font-semibold text-primary">MeritSpark</span>
+                        <span className="font-semibold text-primary">UGV Quiz</span>
                     </div>
 
                     {/* Celebration Icon */}

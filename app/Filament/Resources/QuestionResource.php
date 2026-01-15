@@ -5,7 +5,6 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\QuestionResource\Pages;
 use App\Filament\Resources\QuestionResource\RelationManagers;
 use App\Models\Category;
-use App\Models\Exam;
 use App\Models\Question;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -35,25 +34,16 @@ class QuestionResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Question Information')
                     ->schema([
-                        Forms\Components\Select::make('exam_id')
-                            ->label('Exam')
-                            ->relationship('exam', 'title')
-                            ->required()
-                            ->searchable()
-                            ->preload()
-                            ->reactive()
-                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('category_id', null))
-                            ->columnSpan(1),
-
                         Forms\Components\Select::make('category_id')
                             ->label('Category')
-                            ->relationship('category', 'name', fn ($query, $get) => 
+                            ->relationship('category', 'name', fn ($query) => 
                                 $query->where('is_active', true)
                             )
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->columnSpan(1),
+                            ->columnSpanFull()
+                            ->helperText('Questions will be randomly selected from categories based on exam category rules'),
 
                         Forms\Components\Textarea::make('question_text')
                             ->label('Question Text')
@@ -126,11 +116,6 @@ class QuestionResource extends Resource
                     ->label('ID')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('exam.title')
-                    ->label('Exam')
-                    ->sortable()
-                    ->searchable()
-                    ->weight('medium'),
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Category')
                     ->sortable()
@@ -164,11 +149,6 @@ class QuestionResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('exam_id')
-                    ->label('Exam')
-                    ->relationship('exam', 'title')
-                    ->searchable()
-                    ->preload(),
                 Tables\Filters\SelectFilter::make('category_id')
                     ->label('Category')
                     ->relationship('category', 'name')
@@ -206,10 +186,6 @@ class QuestionResource extends Resource
             ->schema([
                 Infolists\Components\Section::make('Question Details')
                     ->schema([
-                        Infolists\Components\TextEntry::make('exam.title')
-                            ->label('Exam')
-                            ->badge()
-                            ->color('primary'),
                         Infolists\Components\TextEntry::make('category.name')
                             ->label('Category')
                             ->badge()

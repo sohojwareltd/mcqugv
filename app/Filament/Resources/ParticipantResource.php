@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Exports\ParticipantExportExporter;
 use App\Filament\Resources\ParticipantResource\Pages;
 use App\Filament\Resources\ParticipantResource\RelationManagers;
 use App\Models\Exam;
@@ -112,10 +113,26 @@ class ParticipantResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('rank')
+                    ->label('Rank')
+                    ->sortable()
+                    ->searchable()
+                    ->badge()
+                    ->color('primary')
+                    ->default('—')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('merit_position')
+                    ->label('Merit')
+                    ->sortable()
+                    ->badge()
+                    ->color('success')
+                    ->default('—')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('full_name')
                     ->label('Name')
                     ->sortable()
@@ -149,8 +166,8 @@ class ParticipantResource extends Resource
                 Tables\Columns\TextColumn::make('score')
                     ->label('Score')
                     ->sortable()
-                    ->formatStateUsing(fn ($state) => $state ? $state . '%' : 'N/A')
-                    ->color(fn ($state) => $state >= 70 ? 'success' : ($state >= 50 ? 'warning' : ($state ? 'danger' : 'gray')))
+                    ->formatStateUsing(fn ($state, $record) => $state !== null ? $state . ' / ' . $record->participantQuestions()->count() : 'N/A')
+                    ->color(fn ($state, $record) => static::getScoreColor($state, $record))
                     ->badge(),
                 Tables\Columns\IconColumn::make('completed_at')
                     ->label('Status')
@@ -197,12 +214,19 @@ class ParticipantResource extends Resource
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
+            ->headerActions([
+                Tables\Actions\ExportAction::make()
+                    ->exporter(ParticipantExportExporter::class)
+                    ->label('Export to Excel'),
+            ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ExportBulkAction::make()
+                        ->exporter(ParticipantExportExporter::class),
                 ]),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('rank', 'asc');
     }
 
     public static function getRelations(): array
@@ -244,10 +268,22 @@ class ParticipantResource extends Resource
 
                 Infolists\Components\Section::make('Exam Results')
                     ->schema([
+                        Infolists\Components\TextEntry::make('rank')
+                            ->label('Rank')
+                            ->badge()
+                            ->color('primary')
+                            ->size(Infolists\Components\TextEntry\TextEntrySize::Large)
+                            ->placeholder('Not ranked'),
+                        Infolists\Components\TextEntry::make('merit_position')
+                            ->label('Merit Position')
+                            ->badge()
+                            ->color('success')
+                            ->size(Infolists\Components\TextEntry\TextEntrySize::Large)
+                            ->placeholder('Not ranked'),
                         Infolists\Components\TextEntry::make('score')
                             ->label('Score')
-                            ->formatStateUsing(fn ($state) => $state ? $state . '%' : 'N/A')
-                            ->color(fn ($state) => $state >= 70 ? 'success' : ($state >= 50 ? 'warning' : ($state ? 'danger' : 'gray')))
+                            ->formatStateUsing(fn ($state, $record) => static::formatScore($state, $record))
+                            ->color(fn ($state, $record) => static::getScoreColorForInfolist($state, $record))
                             ->badge()
                             ->size(Infolists\Components\TextEntry\TextEntrySize::Large),
                         Infolists\Components\IconEntry::make('completed_at')
@@ -266,22 +302,162 @@ class ParticipantResource extends Resource
                             ->dateTime('d/m/Y H:i')
                             ->placeholder('Not completed'),
                     ])
-                    ->columns(4),
+                    ->columns(3),
+
+                Infolists\Components\Section::make('IP Address & Location')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('ip_address')
+                            ->label('IP Address')
+                            ->copyable()
+                            ->icon('heroicon-o-globe-alt'),
+                        Infolists\Components\TextEntry::make('ip_location')
+                            ->label('Location')
+                            ->getStateUsing(function ($record) {
+                                if (!$record->ip_address || $record->ip_address === '127.0.0.1' || $record->ip_address === '::1') {
+                                    return 'Local/Private IP';
+                                }
+                                return static::getIpLocation($record->ip_address);
+                            })
+                            ->icon('heroicon-o-map-pin')
+                            ->placeholder('Unable to determine location'),
+                    ])
+                    ->columns(2)
+                    ->collapsible(),
+
+                Infolists\Components\Section::make('Questions & Answers')
+                    ->description('All questions answered by this participant')
+                    ->schema([
+                        Infolists\Components\RepeatableEntry::make('participantQuestions')
+                            ->label('')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('order_no')
+                                    ->label('Q#')
+                                    ->badge()
+                                    ->color('primary')
+                                    ->formatStateUsing(fn ($state) => 'Q' . $state),
+                                Infolists\Components\TextEntry::make('question.question_text')
+                                    ->label('Question')
+                                    ->html()
+                                    ->columnSpan(3)
+                                    ->limit(200),
+                                Infolists\Components\TextEntry::make('question.category.name')
+                                    ->label('Category')
+                                    ->badge()
+                                    ->color('info'),
+                                Infolists\Components\TextEntry::make('participant_answer')
+                                    ->label('Participant Answer')
+                                    ->getStateUsing(function ($record) {
+                                        // $record is ParticipantQuestion, get participant through relationship
+                                        $participantId = $record->participant_id;
+                                        
+                                        $answer = \App\Models\Answer::where('participant_id', $participantId)
+                                            ->where('question_id', $record->question_id)
+                                            ->with('option')
+                                            ->first();
+                                        
+                                        if (!$answer || !$answer->option) {
+                                            return 'Not answered';
+                                        }
+                                        
+                                        $isCorrect = $answer->is_correct;
+                                        $optionText = $answer->option->option_text;
+                                        $icon = $isCorrect ? '✓' : '✗';
+                                        
+                                        return ($isCorrect ? '✓ ' : '✗ ') . $optionText;
+                                    })
+                                    ->badge()
+                                    ->color(function ($record) {
+                                        $participantId = $record->participant_id;
+                                        $answer = \App\Models\Answer::where('participant_id', $participantId)
+                                            ->where('question_id', $record->question_id)
+                                            ->first();
+                                        
+                                        if (!$answer) {
+                                            return 'gray';
+                                        }
+                                        
+                                        return $answer->is_correct ? 'success' : 'danger';
+                                    })
+                                    ->icon(function ($record) {
+                                        $participantId = $record->participant_id;
+                                        $answer = \App\Models\Answer::where('participant_id', $participantId)
+                                            ->where('question_id', $record->question_id)
+                                            ->first();
+                                        
+                                        if (!$answer) {
+                                            return null;
+                                        }
+                                        
+                                        return $answer->is_correct ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle';
+                                    })
+                                    ->columnSpan(2),
+                                Infolists\Components\TextEntry::make('correct_answer')
+                                    ->label('Correct Answer')
+                                    ->getStateUsing(function ($record) {
+                                        $correctOption = $record->question->options()->where('is_correct', true)->first();
+                                        return $correctOption ? $correctOption->option_text : 'N/A';
+                                    })
+                                    ->badge()
+                                    ->color('success')
+                                    ->columnSpan(2),
+                            ])
+                            ->columns(4)
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible(),
 
                 Infolists\Components\Section::make('Additional Information')
                     ->schema([
-                        Infolists\Components\TextEntry::make('ip_address')
-                            ->label('IP Address'),
+                        Infolists\Components\TextEntry::make('attempt_token')
+                            ->label('Attempt Token')
+                            ->copyable()
+                            ->placeholder('N/A')
+                            ->limit(50)
+                            ->tooltip(fn ($record) => $record->attempt_token)
+                            ->columnSpanFull(),
                         Infolists\Components\TextEntry::make('created_at')
                             ->label('Registered At')
-                            ->dateTime(),
+                            ->dateTime('d/m/Y H:i')
+                            ->columnSpan(1),
                         Infolists\Components\TextEntry::make('updated_at')
                             ->label('Last Updated')
-                            ->dateTime(),
+                            ->dateTime('d/m/Y H:i')
+                            ->columnSpan(1),
                     ])
-                    ->columns(3)
+                    ->columns(2)
                     ->collapsible(),
             ]);
+    }
+
+    protected static function getIpLocation(string $ip): string
+    {
+        try {
+            // Use ip-api.com free service (45 requests/minute limit)
+            $response = \Illuminate\Support\Facades\Http::timeout(3)
+                ->get("http://ip-api.com/json/{$ip}?fields=status,message,country,regionName,city,isp");
+            
+            if ($response->successful()) {
+                $data = $response->json();
+                
+                if ($data['status'] === 'success') {
+                    $location = [];
+                    if (!empty($data['city'])) $location[] = $data['city'];
+                    if (!empty($data['regionName'])) $location[] = $data['regionName'];
+                    if (!empty($data['country'])) $location[] = $data['country'];
+                    
+                    $locationStr = implode(', ', $location);
+                    if (!empty($data['isp'])) {
+                        $locationStr .= ' (' . $data['isp'] . ')';
+                    }
+                    
+                    return $locationStr ?: 'Unknown location';
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::warning('IP geolocation failed', ['ip' => $ip, 'error' => $e->getMessage()]);
+        }
+        
+        return 'Unable to determine location';
     }
 
     public static function getPages(): array
@@ -292,5 +468,35 @@ class ParticipantResource extends Resource
             'view' => Pages\ViewParticipant::route('/{record}'),
             'edit' => Pages\EditParticipant::route('/{record}/edit'),
         ];
+    }
+
+    protected static function getScoreColor($state, $record): string
+    {
+        if ($state === null) {
+            return 'gray';
+        }
+        $total = $record->participantQuestions()->count();
+        $percentage = $total > 0 ? ($state / $total) * 100 : 0;
+        return $percentage >= 70 ? 'success' : ($percentage >= 50 ? 'warning' : 'danger');
+    }
+
+    protected static function formatScore($state, $record): string
+    {
+        if ($state === null) {
+            return 'N/A';
+        }
+        $total = $record->participantQuestions()->count();
+        $percentage = $total > 0 ? round(($state / $total) * 100, 1) : 0;
+        return $state . ' / ' . $total . ' (' . $percentage . '%)';
+    }
+
+    protected static function getScoreColorForInfolist($state, $record): string
+    {
+        if ($state === null) {
+            return 'gray';
+        }
+        $total = $record->participantQuestions()->count();
+        $percentage = $total > 0 ? ($state / $total) * 100 : 0;
+        return $percentage >= 70 ? 'success' : ($percentage >= 50 ? 'warning' : 'danger');
     }
 }

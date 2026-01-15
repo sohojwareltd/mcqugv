@@ -15,11 +15,11 @@ class DatabaseSeeder extends Seeder
     {
         // Create admin user
         User::firstOrCreate(
-            ['email' => 'admin@example.com'],
+            ['email' => 'thisiskazi@gmail.com'],
             [
-                'name' => 'Admin User',
-                'email' => 'admin@example.com',
-                'password' => Hash::make('password'),
+                'name' => 'Kazi Rayhan Reza',
+                'email' => 'thisiskazi@gmail.com',
+                'password' => Hash::make('kazi@20042002'),
                 'email_verified_at' => now(),
             ]
         );
@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CategorySeeder::class,
             ExamSeeder::class,
-            QuestionSeeder::class,
+            // QuestionSeeder::class,
         ]);
     }
 }

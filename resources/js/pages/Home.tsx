@@ -8,8 +8,7 @@ import { CountdownTimer } from '../components/CountdownTimer';
 interface Participant {
     rank: number;
     full_name: string;
-    phone: string;
-    score: number;
+    hsc_roll: string | null;
 }
 
 interface PreviousLeaderboard {
@@ -26,7 +25,15 @@ interface HomeProps {
         id: number;
         title: string;
         total_questions: number;
+        start_time?: string;
+        end_time?: string;
         result_publish_at?: string;
+        status: 'upcoming' | 'active' | 'ended';
+        next_exam?: {
+            id: number;
+            title: string;
+            start_time: string;
+        };
     } | null;
     participantCount: number;
     previousLeaderboard: PreviousLeaderboard | null;
@@ -61,7 +68,55 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
         },
     ];
 
-    const resultTime = exam?.result_publish_at ? new Date(exam.result_publish_at) : null;
+    // Determine what timers to show based on exam status
+    const getTimerInfo = () => {
+        if (!exam) return null;
+
+        const now = new Date();
+        
+        if (exam.status === 'upcoming' && exam.start_time) {
+            return {
+                type: 'exam_start' as const,
+                targetDate: new Date(exam.start_time),
+                label: 'Exam starts in',
+            };
+        }
+
+        if (exam.status === 'active' && exam.end_time) {
+            return {
+                type: 'exam_end' as const,
+                targetDate: new Date(exam.end_time),
+                label: 'Exam ends in',
+            };
+        }
+
+        if (exam.status === 'ended') {
+            const timers = [];
+            
+            if (exam.next_exam?.start_time) {
+                timers.push({
+                    type: 'next_exam' as const,
+                    targetDate: new Date(exam.next_exam.start_time),
+                    label: 'Next exam starts in',
+                });
+            }
+            
+            if (exam.result_publish_at) {
+                timers.push({
+                    type: 'result_publish' as const,
+                    targetDate: new Date(exam.result_publish_at),
+                    label: 'Results publish in',
+                });
+            }
+            
+            return timers.length > 0 ? timers : null;
+        }
+
+        return null;
+    };
+
+    const timerInfo = getTimerInfo();
+    const isMultipleTimers = Array.isArray(timerInfo);
 
     // Check if previous exam results are published (only show if publish time has passed)
     const isPreviousExamResultsPublished = previousLeaderboard?.exam.result_publish_at
@@ -77,7 +132,7 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
 
     return (
         <>
-            <Head title="MeritSpark - National MCQ Exam Platform" />
+            <Head title="UGV Quiz - National MCQ Exam Platform" />
             <div className="min-h-screen gradient-bg">
                 {/* Subtle UGV Branding Bar */}
                 <div className="bg-card/50 backdrop-blur-sm border-b border-border/50">
@@ -120,7 +175,7 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
                         {/* Logo */}
                         <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-8 animate-slide-up">
                             <Sparkles className="w-5 h-5 text-primary" />
-                            <span className="font-semibold text-primary">MeritSpark</span>
+                            <span className="font-semibold text-primary">UGV Quiz</span>
                         </div>
 
                         {/* Main Headline */}
@@ -132,7 +187,7 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
 
                         {/* Subtext */}
                         <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: '0.2s' }}>
-                            Participate in our national MCQ challenge and get ranked among thousands of students across Bangladesh.
+                        Join the ultimate quiz challenge hosted by UGV – University of Global Village, Southern Bangladesh’s most high-tech uni! 🎉 In celebration of Admission Fair 2026 (Jan 14–24), test your brain, compete with thousands of students across Bangladesh, and win awesome prizes! 🏆✨
                         </p>
 
                         {/* Stats Row */}
@@ -140,7 +195,7 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
                             <div className="flex items-center gap-2">
                                 <Users className="w-5 h-5 text-primary" />
                                 <span className="text-2xl font-bold text-foreground">
-                                    <AnimatedCounter end={participantCount} />
+                                    <AnimatedCounter start={100} end={1238 + participantCount} />
                                 </span>
                                 <span className="text-muted-foreground">Participants</span>
                             </div>
@@ -153,26 +208,64 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
                             <div className="hidden md:block w-px h-8 bg-border" />
                             <div className="flex items-center gap-2">
                                 <Clock className="w-5 h-5 text-warning" />
-                                <span className="text-xl font-bold text-foreground">Unlimited</span>
+                                <span className="text-xl font-bold text-foreground">10 Minutes</span>
                                 <span className="text-muted-foreground">Time</span>
                             </div>
                         </div>
 
-                        {/* CTA Button */}
-                        <Button
-                            size="lg"
-                            onClick={handleStartExam}
-                            className="text-lg px-8 py-6 rounded-full glow-primary hover:scale-105 transition-all duration-300 animate-pulse-glow"
-                        >
-                            Start Exam Now
-                            <ArrowRight className="ml-2 w-5 h-5" />
-                        </Button>
+                        {/* CTA Button - Only show if exam is active */}
+                        {exam?.status === 'active' && (
+                            <Button
+                                size="lg"
+                                onClick={handleStartExam}
+                                className="text-lg px-8 py-6 rounded-full glow-primary hover:scale-105 transition-all duration-300 animate-pulse-glow"
+                            >
+                                Start Exam Now
+                                <ArrowRight className="ml-2 w-5 h-5" />
+                            </Button>
+                        )}
 
-                        {/* Result Announcement */}
-                        {resultTime && (
-                            <div className="mt-12 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-                                <p className="text-muted-foreground mb-4">Result will be announced at:</p>
-                                <CountdownTimer targetDate={resultTime} />
+                        {/* Timer Display */}
+                        {timerInfo && (
+                            <div className="mt-12 animate-slide-up space-y-6" style={{ animationDelay: '0.4s' }}>
+                                {isMultipleTimers ? (
+                                    // Multiple timers (for ended exam)
+                                    timerInfo.map((timer, index) => (
+                                        <div key={index} className="flex justify-center">
+                                            <div className="text-center">
+                                                <p className="text-muted-foreground mb-4">{timer.label}:</p>
+                                                <div className="flex justify-center">
+                                                    <CountdownTimer targetDate={timer.targetDate} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    // Single timer
+                                    timerInfo && (
+                                        <div className="flex justify-center">
+                                            <div className="text-center">
+                                                <p className="text-muted-foreground mb-4">{timerInfo.label}:</p>
+                                                <div className="flex justify-center">
+                                                    <CountdownTimer targetDate={timerInfo.targetDate} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        )}
+
+                        {/* Status Messages */}
+                        {exam?.status === 'upcoming' && (
+                            <div className="mt-8 p-4 bg-warning/10 border border-warning/20 rounded-lg animate-slide-up" style={{ animationDelay: '0.4s' }}>
+                                <p className="text-warning font-semibold">Exam has not started yet. Please wait for the countdown.</p>
+                            </div>
+                        )}
+                        
+                        {exam?.status === 'ended' && (
+                            <div className="mt-8 p-4 bg-muted border border-border rounded-lg animate-slide-up" style={{ animationDelay: '0.4s' }}>
+                                <p className="text-muted-foreground">This exam has ended. Check the timers above for next exam and results.</p>
                             </div>
                         )}
                     </div>
@@ -219,11 +312,13 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <h3 className="font-semibold truncate">{participant.full_name}</h3>
-                                            <p className="text-sm text-muted-foreground truncate">{participant.phone}</p>
+                                            {participant.hsc_roll && (
+                                                <p className="text-sm text-muted-foreground truncate">Roll: {participant.hsc_roll}</p>
+                                            )}
                                         </div>
                                         <div className="flex-shrink-0 text-right">
-                                            <div className="text-lg font-bold text-primary">{participant.score}</div>
-                                            <div className="text-xs text-muted-foreground">Score</div>
+                                            <div className="text-lg font-bold text-primary">#{participant.rank}</div>
+                                            <div className="text-xs text-muted-foreground">Rank</div>
                                         </div>
                                     </div>
                                 ))}
@@ -244,7 +339,7 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
                 {/* Footer */}
                 <footer className="border-t border-border py-6">
                     <div className="container mx-auto px-4 text-center text-muted-foreground text-sm">
-                        <p>© 2024 MeritSpark. All rights reserved.</p>
+                        <p>© 2024 UGV Quiz. All rights reserved.</p>
                         <div className="mt-2 flex items-center justify-center gap-3 text-xs">
                             <span>Powered by</span>
                             <img 

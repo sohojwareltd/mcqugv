@@ -4,10 +4,17 @@
 `MethodNotAllowedHttpException: The POST method is not supported for route admin/login`
 
 ## Root Cause
-Filament uses Livewire for form submissions, which handles POST requests via AJAX to `livewire/update` endpoint. However, in production, **route caching (`php artisan route:cache`) can prevent Livewire routes from being registered**, causing the login form to fail.
+**For Nginx servers:** The issue is almost always Nginx misconfiguration. Nginx must:
+1. Properly route `/livewire/*` requests to Laravel
+2. Pass POST request methods correctly to PHP-FPM
+3. Include proper `fastcgi_param` directives
 
-## Quick Fix Applied
-Added explicit Livewire route registration in `routes/web.php` to ensure routes persist after caching.
+**For Apache servers:** Usually route caching or `.htaccess` issues.
+
+## IMPORTANT: If Using Nginx
+**See `NGINX_FIX.md` for complete Nginx-specific solution!**
+
+The most common issue is missing `fastcgi_param REQUEST_METHOD $request_method;` in your Nginx PHP location block.
 
 ## Solution Steps
 
@@ -65,13 +72,28 @@ Ensure your `.htaccess` in the `public/` directory includes:
 </IfModule>
 ```
 
-#### For Nginx
-Ensure your location block includes:
+#### For Nginx (CRITICAL - Most Common Issue)
+Your Nginx config MUST include these in the PHP location block:
+
 ```nginx
-location / {
+location ~ \.php$ {
+    fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
+    fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+    include fastcgi_params;
+    
+    # CRITICAL: These ensure POST requests work
+    fastcgi_param REQUEST_METHOD $request_method;
+    fastcgi_param CONTENT_TYPE $content_type;
+    fastcgi_param CONTENT_LENGTH $content_length;
+}
+
+# Also add explicit Livewire route handling
+location ~ ^/livewire/ {
     try_files $uri $uri/ /index.php?$query_string;
 }
 ```
+
+**See `NGINX_FIX.md` for complete Nginx configuration guide.**
 
 ### 5. Verify Document Root
 Make sure your web server's document root points to the `public/` directory, NOT the project root.

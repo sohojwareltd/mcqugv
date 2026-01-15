@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Question extends Model
 {
     protected $fillable = [
-        'exam_id',
         'category_id',
         'question_text',
         'is_active',
@@ -18,11 +17,6 @@ class Question extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
-
-    public function exam(): BelongsTo
-    {
-        return $this->belongsTo(Exam::class);
-    }
 
     public function category(): BelongsTo
     {

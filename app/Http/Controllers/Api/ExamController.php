@@ -29,9 +29,26 @@ class ExamController extends Controller
         ]);
 
         $exam = Exam::findOrFail($request->exam_id);
+        $now = now();
 
+        // Only allow access to exams that are currently active (within active hours)
         if (! $exam->is_active) {
             return response()->json(['error' => 'Exam is not active'], 403);
+        }
+
+        // Check if exam is within active hours (start_time <= now <= end_time)
+        if ($exam->start_time && $exam->start_time->isFuture()) {
+            return response()->json([
+                'error' => 'Exam has not started yet',
+                'start_time' => $exam->start_time->toIso8601String(),
+            ], 403);
+        }
+
+        if ($exam->end_time && $exam->end_time->isPast()) {
+            return response()->json([
+                'error' => 'Exam has ended',
+                'end_time' => $exam->end_time->toIso8601String(),
+            ], 403);
         }
 
         // Check if phone already exists for this exam
@@ -66,8 +83,8 @@ class ExamController extends Controller
         $selectedQuestions = collect();
 
         foreach ($categoryRules as $rule) {
-            $questions = Question::where('exam_id', $exam->id)
-                ->where('category_id', $rule->category_id)
+            // Questions are randomized from category based on ExamCategoryRule (no exam_id needed)
+            $questions = Question::where('category_id', $rule->category_id)
                 ->where('is_active', true)
                 ->inRandomOrder()
                 ->limit($rule->question_count)
@@ -223,15 +240,21 @@ class ExamController extends Controller
             ], 403);
         }
 
+        // Use stored rank if available, otherwise calculate on the fly
         $participants = Participant::where('exam_id', $exam->id)
             ->whereNotNull('completed_at')
-            ->orderBy('score', 'desc')
-            ->orderBy('completed_at', 'asc')
+            ->when(
+                Participant::where('exam_id', $exam->id)->whereNotNull('rank')->exists(),
+                fn ($query) => $query->orderBy('rank', 'asc'),
+                fn ($query) => $query->orderBy('score', 'desc')->orderBy('completed_at', 'asc')
+            )
             ->get()
             ->map(function ($participant, $index) {
                 return [
-                    'rank' => $index + 1,
+                    'rank' => $participant->rank ?? ($index + 1),
+                    'merit_position' => $participant->merit_position ?? ($index + 1),
                     'full_name' => $participant->full_name,
+                    'hsc_roll' => $participant->hsc_roll,
                     'phone' => $participant->phone,
                     'score' => $participant->score,
                     'completed_at' => $participant->completed_at->toIso8601String(),

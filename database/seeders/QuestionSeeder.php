@@ -250,7 +250,7 @@ class QuestionSeeder extends Seeder
             $expandedQuestions[$categorySlug] = array_merge($categoryQuestions, $additionalQuestions[$categorySlug] ?? []);
         }
 
-        // Create questions for each exam
+        // Create questions for each category (questions are randomized via ExamCategoryRule, not tied to specific exams)
         foreach ($exams as $exam) {
             foreach ($expandedQuestions as $categorySlug => $categoryQuestions) {
                 $category = Category::where('slug', $categorySlug)->first();
@@ -270,14 +270,13 @@ class QuestionSeeder extends Seeder
                 $questionsToCreate = array_slice($categoryQuestions, 0, $required);
 
                 foreach ($questionsToCreate as $q) {
+                    // Questions are now category-based only (no exam_id) - randomized via ExamCategoryRule
                     $question = Question::firstOrCreate(
                         [
-                            'exam_id' => $exam->id,
                             'category_id' => $category->id,
                             'question_text' => $q['text'],
                         ],
                         [
-                            'exam_id' => $exam->id,
                             'category_id' => $category->id,
                             'question_text' => $q['text'],
                             'is_active' => true,

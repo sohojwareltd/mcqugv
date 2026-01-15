@@ -22,9 +22,16 @@ const boards = [
     'Madrasah',
 ];
 
-export default function ExamForm() {
+interface ExamFormProps {
+    exam?: {
+        id: number;
+        title: string;
+    };
+}
+
+export default function ExamForm({ exam }: ExamFormProps) {
     const [formData, setFormData] = useState({
-        exam_id: '1',
+        exam_id: exam?.id?.toString() || '1',
         full_name: '',
         phone: '',
         group: '',
@@ -99,14 +106,14 @@ export default function ExamForm() {
 
     return (
         <>
-            <Head title="Student Registration - MeritSpark" />
+            <Head title="Student Registration - UGV Quiz" />
             <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
                 <div className="w-full max-w-lg">
                     {/* Header */}
                     <div className="text-center mb-8">
                         <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
                             <Sparkles className="w-4 h-4 text-primary" />
-                            <span className="font-semibold text-primary">MeritSpark</span>
+                            <span className="font-semibold text-primary">UGV Quiz</span>
                         </div>
                         <h1 className="text-2xl md:text-3xl font-bold mb-2">Student Registration</h1>
                         <p className="text-muted-foreground">Fill in your details to participate</p>

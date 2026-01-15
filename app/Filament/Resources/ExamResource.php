@@ -54,7 +54,7 @@ class ExamResource extends Resource
                             ->displayFormat('d/m/Y H:i')
                             ->timezone('Asia/Dhaka')
                             ->helperText('When the exam becomes available to participants')
-                            ->minDate(now())
+                            ->minDate(fn ($record) => $record ? null : now())
                             ->columnSpan(1),
 
                         Forms\Components\DateTimePicker::make('end_time')
@@ -64,12 +64,28 @@ class ExamResource extends Resource
                             ->displayFormat('d/m/Y H:i')
                             ->timezone('Asia/Dhaka')
                             ->helperText('When the exam will be closed')
-                            ->minDate(fn ($get) => $get('start_time') ? \Carbon\Carbon::parse($get('start_time'))->addMinute() : now())
+                            ->minDate(function (Forms\Get $get, $record) {
+                                // When editing existing exam, don't restrict dates
+                                if ($record) {
+                                    return null;
+                                }
+                                // When creating, use start_time + 1 minute or now()
+                                $startTime = $get('start_time');
+                                if ($startTime) {
+                                    try {
+                                        return \Carbon\Carbon::parse($startTime)->addMinute();
+                                    } catch (\Exception $e) {
+                                        return now();
+                                    }
+                                }
+                                return now();
+                            })
                             ->rules([
                                 'required',
                                 'after:start_time',
                             ])
-                            ->columnSpan(1),
+                            ->columnSpan(1)
+                            ->dehydrated(true), // Ensure value is always saved
                     ])
                     ->columns(2),
 
@@ -91,12 +107,28 @@ class ExamResource extends Resource
                             ->displayFormat('d/m/Y H:i')
                             ->timezone('Asia/Dhaka')
                             ->helperText('When results will be published (optional)')
-                            ->minDate(fn ($get) => $get('end_time') ? \Carbon\Carbon::parse($get('end_time'))->addMinute() : now())
+                            ->minDate(function (Forms\Get $get, $record) {
+                                // When editing existing exam, don't restrict dates
+                                if ($record) {
+                                    return null;
+                                }
+                                // When creating, use end_time + 1 minute or now()
+                                $endTime = $get('end_time');
+                                if ($endTime) {
+                                    try {
+                                        return \Carbon\Carbon::parse($endTime)->addMinute();
+                                    } catch (\Exception $e) {
+                                        return now();
+                                    }
+                                }
+                                return now();
+                            })
                             ->rules([
                                 'nullable',
                                 'after:end_time',
                             ])
-                            ->columnSpan(1),
+                            ->columnSpan(1)
+                            ->dehydrated(true), // Ensure value is always saved
 
                         Forms\Components\Toggle::make('is_active')
                             ->label('Active')
@@ -349,8 +381,13 @@ class ExamResource extends Resource
                             ->getStateUsing(fn ($record) => $record->participants()->whereNotNull('completed_at')->count())
                             ->badge()
                             ->color('success'),
+                        Infolists\Components\TextEntry::make('leaderboard_status')
+                            ->label('Leaderboard Status')
+                            ->getStateUsing(fn ($record) => static::getLeaderboardStatus($record))
+                            ->badge()
+                            ->color(fn ($record) => static::getLeaderboardStatusColor($record)),
                     ])
-                    ->columns(3),
+                    ->columns(4),
 
                 Infolists\Components\Section::make('Timestamps')
                     ->schema([
@@ -374,5 +411,24 @@ class ExamResource extends Resource
             'view' => Pages\ViewExam::route('/{record}'),
             'edit' => Pages\EditExam::route('/{record}/edit'),
         ];
+    }
+
+    protected static function getLeaderboardStatus($record): string
+    {
+        $rankedCount = $record->participants()->whereNotNull('rank')->count();
+        $completedCount = $record->participants()->whereNotNull('completed_at')->count();
+        
+        if ($rankedCount === 0 && $completedCount > 0) {
+            return 'Not Calculated';
+        } elseif ($rankedCount > 0) {
+            return "Calculated ({$rankedCount} participants ranked)";
+        }
+        return 'No completed participants';
+    }
+
+    protected static function getLeaderboardStatusColor($record): string
+    {
+        $rankedCount = $record->participants()->whereNotNull('rank')->count();
+        return $rankedCount > 0 ? 'success' : 'warning';
     }
 }
