@@ -19,7 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
         
-        // Redirect unauthenticated requests to Filament admin login
+        // Note: redirectGuestsTo only redirects GET requests by default in Laravel 11
+        // POST requests (like Livewire) are not affected
         $middleware->redirectGuestsTo('/admin/login');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
