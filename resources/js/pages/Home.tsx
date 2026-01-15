@@ -319,7 +319,24 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
                         )}
                     </div>
                 </div>
-
+     {/* Features Section */}
+     <div className="container mx-auto px-4 pb-12">
+                    <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-12">
+                        {features.map((feature, index) => (
+                            <Card
+                                key={feature.title}
+                                className="p-6 card-shadow hover:scale-105 transition-all duration-300 border-0 animate-scale-in"
+                                style={{ animationDelay: `${0.5 + index * 0.1}s` }}
+                            >
+                                <div className={`w-14 h-14 rounded-2xl ${feature.bgColor} flex items-center justify-center mb-4`}>
+                                    <feature.icon className={`w-7 h-7 ${feature.color}`} />
+                                </div>
+                                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                                <p className="text-muted-foreground">{feature.description}</p>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
                 {/* Exam Rules Section */}
                 <div className="container mx-auto px-4 pb-12">
                     <div className="max-w-4xl mx-auto mb-12">
@@ -423,24 +440,7 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
                     </div>
                 </div>
 
-                {/* Features Section */}
-                <div className="container mx-auto px-4 pb-12">
-                    <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-12">
-                        {features.map((feature, index) => (
-                            <Card
-                                key={feature.title}
-                                className="p-6 card-shadow hover:scale-105 transition-all duration-300 border-0 animate-scale-in"
-                                style={{ animationDelay: `${0.5 + index * 0.1}s` }}
-                            >
-                                <div className={`w-14 h-14 rounded-2xl ${feature.bgColor} flex items-center justify-center mb-4`}>
-                                    <feature.icon className={`w-7 h-7 ${feature.color}`} />
-                                </div>
-                                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                                <p className="text-muted-foreground">{feature.description}</p>
-                            </Card>
-                        ))}
-                    </div>
-                </div>
+           
 
                 {/* Previous Exam Leaderboard */}
                 {previousLeaderboard && previousLeaderboard.participants.length > 0 && isPreviousExamResultsPublished && (
