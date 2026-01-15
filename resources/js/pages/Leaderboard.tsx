@@ -157,7 +157,7 @@ export default function Leaderboard({ currentExam, nextExam, previousExams }: Le
                             <img 
                                 src="/UGV-Logo-02.png" 
                                 alt="University of Global Village" 
-                                className="h-16 md:h-20 w-auto mx-auto object-contain brightness-0 invert"
+                                className="h-16 md:h-20 w-auto mx-auto object-contain "
                             />
                         </div>
                         <div className="inline-flex items-center gap-2 bg-primary-foreground/10 px-4 py-2 rounded-full mb-4">
