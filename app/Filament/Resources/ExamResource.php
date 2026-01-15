@@ -259,11 +259,6 @@ class ExamResource extends Resource
                     ->sortable()
                     ->badge()
                     ->color('success'),
-                Tables\Columns\TextColumn::make('questions_count')
-                    ->label('Total Questions')
-                    ->counts('questions')
-                    ->sortable()
-                    ->badge(),
                 Tables\Columns\TextColumn::make('categoryRules_count')
                     ->label('Category Rules')
                     ->counts('categoryRules')
@@ -367,10 +362,6 @@ class ExamResource extends Resource
 
                 Infolists\Components\Section::make('Statistics')
                     ->schema([
-                        Infolists\Components\TextEntry::make('questions_count')
-                            ->label('Total Questions')
-                            ->getStateUsing(fn ($record) => $record->questions()->count())
-                            ->badge(),
                         Infolists\Components\TextEntry::make('participants_count')
                             ->label('Total Participants')
                             ->getStateUsing(fn ($record) => $record->participants()->count())

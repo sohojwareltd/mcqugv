@@ -29,11 +29,6 @@ class Exam extends Model
         return $this->hasMany(ExamCategoryRule::class);
     }
 
-    public function questions(): HasMany
-    {
-        return $this->hasMany(Question::class);
-    }
-
     public function participants(): HasMany
     {
         return $this->hasMany(Participant::class);
@@ -42,15 +37,12 @@ class Exam extends Model
     public function canBeActivated(): bool
     {
         $requiredCount = $this->categoryRules->sum('question_count');
-        $availableCount = $this->questions()
-            ->where('is_active', true)
-            ->get()
-            ->groupBy('category_id')
-            ->map(function ($questions, $categoryId) {
-                $rule = $this->categoryRules->firstWhere('category_id', $categoryId);
-                return min($questions->count(), $rule ? $rule->question_count : 0);
-            })
-            ->sum();
+        $availableCount = $this->categoryRules->sum(function ($rule) {
+            $categoryQuestions = \App\Models\Question::where('category_id', $rule->category_id)
+                ->where('is_active', true)
+                ->count();
+            return min($categoryQuestions, $rule->question_count);
+        });
 
         return $availableCount >= $requiredCount;
     }

@@ -19,7 +19,7 @@ class ExamReportWidget extends BaseWidget
         return $table
             ->query(
                 Exam::query()
-                    ->withCount(['participants', 'questions', 'categoryRules'])
+                    ->withCount(['participants', 'categoryRules'])
                     ->latest()
             )
             ->columns([
@@ -44,10 +44,6 @@ class ExamReportWidget extends BaseWidget
                     ->label('Participants')
                     ->badge()
                     ->color('success'),
-                Tables\Columns\TextColumn::make('questions_count')
-                    ->label('Questions')
-                    ->badge()
-                    ->color('info'),
                 Tables\Columns\TextColumn::make('categoryRules_count')
                     ->label('Category Rules')
                     ->badge()
