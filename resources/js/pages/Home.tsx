@@ -173,11 +173,17 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
                 <div className="container mx-auto px-4 py-12 md:py-20">
                     <div className="text-center max-w-4xl mx-auto">
                         {/* Logo */}
-                        <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-8 animate-slide-up">
-                            <Sparkles className="w-5 h-5 text-primary" />
-                            <span className="font-semibold text-primary">UGV Quiz</span>
+                        <div className="mb-8 animate-slide-up">
+                            <img 
+                                src="/UGV-Logo-02.png" 
+                                alt="University of Global Village" 
+                                className="h-16 md:h-20 w-auto mx-auto mb-4 object-contain"
+                            />
+                            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
+                                <Sparkles className="w-5 h-5 text-primary" />
+                                <span className="font-semibold text-primary">UGV Quiz</span>
+                            </div>
                         </div>
-
                         {/* Main Headline */}
                         <h1 className="text-4xl md:text-6xl font-extrabold mb-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
                             <span className="text-gradient">Test Your Skill.</span>
