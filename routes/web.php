@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ExamController;
 use Illuminate\Support\Facades\Route;
+use Livewire\Livewire;
 
 Route::get('/', [ExamController::class, 'home'])->name('home');
 Route::get('/exam/form', [ExamController::class, 'form'])->name('exam.form');
@@ -15,3 +16,9 @@ Route::get('/leaderboard', [ExamController::class, 'leaderboard'])->name('leader
 Route::match(['get', 'post'], '/login', function () {
     return redirect('/admin/login');
 })->name('login');
+
+// Force Livewire routes to be registered (fixes route:cache issue in production)
+// This ensures Filament login works correctly when routes are cached
+Livewire::setUpdateRoute(function ($handle) {
+    return Route::post('/livewire/update', $handle);
+});

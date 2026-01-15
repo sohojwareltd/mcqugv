@@ -4,23 +4,37 @@
 `MethodNotAllowedHttpException: The POST method is not supported for route admin/login`
 
 ## Root Cause
-Filament uses Livewire for form submissions, which handles POST requests via AJAX to `livewire/update` endpoint. However, in production, route caching or server configuration may prevent this from working correctly.
+Filament uses Livewire for form submissions, which handles POST requests via AJAX to `livewire/update` endpoint. However, in production, **route caching (`php artisan route:cache`) can prevent Livewire routes from being registered**, causing the login form to fail.
+
+## Quick Fix Applied
+Added explicit Livewire route registration in `routes/web.php` to ensure routes persist after caching.
 
 ## Solution Steps
 
-### 1. Clear All Caches (IMPORTANT - Do this first!)
+### 1. Code Fix (Already Applied)
+The `routes/web.php` file now includes explicit Livewire route registration:
+```php
+use Livewire\Livewire;
+
+Livewire::setUpdateRoute(function ($handle) {
+    return Route::post('/livewire/update', $handle);
+});
+```
+
+### 2. Deploy to Production
+After deploying the updated code, run these commands on your production server:
+
 ```bash
+# Clear all caches first
 php artisan route:clear
 php artisan config:clear
 php artisan cache:clear
 php artisan view:clear
 php artisan optimize:clear
-```
 
-### 2. Rebuild Route Cache (in production only)
-```bash
-php artisan route:cache
+# Rebuild caches
 php artisan config:cache
+php artisan route:cache
 php artisan view:cache
 php artisan optimize
 ```
@@ -32,8 +46,11 @@ php artisan route:list --path=livewire
 ```
 
 You should see:
-- `POST livewire/update` - This is what Filament uses for form submissions
-- `POST livewire/upload-file` - For file uploads
+- ✅ `POST livewire/update` - **This is what Filament uses for login form submissions**
+- ✅ `POST livewire/upload-file` - For file uploads
+- ✅ `GET|HEAD livewire/livewire.js` - JavaScript assets
+
+**CRITICAL:** If you don't see the POST routes after running `route:cache`, the code fix in step 1 is essential.
 
 ### 4. Check Server Configuration
 
