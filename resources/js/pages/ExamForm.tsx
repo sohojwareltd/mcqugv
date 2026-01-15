@@ -1,6 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { useState, FormEvent } from 'react';
-import { ArrowRight, User, Phone, GraduationCap, BookOpen, Building, Sparkles } from 'lucide-react';
+import { ArrowRight, User, Phone, GraduationCap, BookOpen, Building, Sparkles, Calendar } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
