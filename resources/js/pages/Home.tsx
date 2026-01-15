@@ -134,18 +134,23 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
         <>
             <Head title="UGV Quiz - National MCQ Exam Platform" />
             <div className="min-h-screen gradient-bg">
-                {/* Subtle UGV Branding Bar */}
-                <div className="bg-card/50 backdrop-blur-sm border-b border-border/50">
-                    <div className="container mx-auto px-4 py-2">
-                        <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
-                            <img 
-                                src="/UGV-Logo-02.png" 
-                                alt="UGV" 
-                                className="h-6 w-auto object-contain opacity-80"
-                            />
-                            <span className="hidden sm:inline">University of Global Village, Barishal</span>
-                            <span className="hidden md:inline">•</span>
-                            <a href="tel:01763877777" className="hidden md:inline hover:text-primary transition-colors">
+                {/* UGV Branding Bar */}
+                <div className="bg-card/80 backdrop-blur-sm border-b border-border/50 shadow-sm">
+                    <div className="container mx-auto px-4 py-3">
+                        <div className="flex items-center justify-center gap-4">
+                            <a href="https://www.ugv.edu.bd" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                                <img 
+                                    src="/UGV-Logo-02.png" 
+                                    alt="University of Global Village" 
+                                    className="h-10 md:h-12 w-auto object-contain"
+                                />
+                                <div className="hidden sm:block text-left">
+                                    <div className="text-sm font-semibold text-foreground">University of Global Village</div>
+                                    <div className="text-xs text-muted-foreground">Barishal</div>
+                                </div>
+                            </a>
+                            <span className="hidden md:inline text-muted-foreground">•</span>
+                            <a href="tel:01763877777" className="hidden md:inline text-sm text-muted-foreground hover:text-primary transition-colors">
                                 01763877777
                             </a>
                         </div>
@@ -343,18 +348,17 @@ export default function Home({ exam, participantCount, previousLeaderboard }: Ho
                 )}
 
                 {/* Footer */}
-                <footer className="border-t border-border py-6">
-                    <div className="container mx-auto px-4 text-center text-muted-foreground text-sm">
-                        <p>© 2024 UGV Quiz. All rights reserved.</p>
-                        <div className="mt-2 flex items-center justify-center gap-3 text-xs">
-                            <span>Powered by</span>
+                <footer className="border-t border-border py-8 bg-card/50">
+                    <div className="container mx-auto px-4 text-center">
+                        <a href="https://www.ugv.edu.bd" target="_blank" rel="noopener noreferrer" className="inline-block mb-4 hover:opacity-80 transition-opacity">
                             <img 
                                 src="/UGV-Logo-02.png" 
-                                alt="UGV" 
-                                className="h-4 w-auto object-contain opacity-60"
+                                alt="University of Global Village" 
+                                className="h-12 w-auto mx-auto object-contain"
                             />
-                            <span>University of Global Village, Barishal</span>
-                        </div>
+                        </a>
+                        <p className="text-muted-foreground text-sm mb-2">© 2024 UGV Quiz. All rights reserved.</p>
+                        <p className="text-xs text-muted-foreground">Powered by University of Global Village, Barishal</p>
                     </div>
                 </footer>
             </div>

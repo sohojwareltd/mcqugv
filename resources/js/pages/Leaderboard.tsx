@@ -110,18 +110,23 @@ export default function Leaderboard({ currentExam, nextExam, previousExams }: Le
         <>
             <Head title="Merit List - UGV Quiz" />
             <div className="min-h-screen gradient-bg">
-                {/* Subtle UGV Branding Bar */}
-                <div className="bg-card/50 backdrop-blur-sm border-b border-border/50">
-                    <div className="container mx-auto px-4 py-2">
-                        <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
-                            <img 
-                                src="/UGV-Logo-02.png" 
-                                alt="UGV" 
-                                className="h-6 w-auto object-contain opacity-80"
-                            />
-                            <span className="hidden sm:inline">University of Global Village, Barishal</span>
-                            <span className="hidden md:inline">•</span>
-                            <a href="tel:01763877777" className="hidden md:inline hover:text-primary transition-colors">
+                {/* UGV Branding Bar */}
+                <div className="bg-card/80 backdrop-blur-sm border-b border-border/50 shadow-sm">
+                    <div className="container mx-auto px-4 py-3">
+                        <div className="flex items-center justify-center gap-4">
+                            <a href="https://www.ugv.edu.bd" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                                <img 
+                                    src="/UGV-Logo-02.png" 
+                                    alt="University of Global Village" 
+                                    className="h-10 md:h-12 w-auto object-contain"
+                                />
+                                <div className="hidden sm:block text-left">
+                                    <div className="text-sm font-semibold text-foreground">University of Global Village</div>
+                                    <div className="text-xs text-muted-foreground">Barishal</div>
+                                </div>
+                            </a>
+                            <span className="hidden md:inline text-muted-foreground">•</span>
+                            <a href="tel:01763877777" className="hidden md:inline text-sm text-muted-foreground hover:text-primary transition-colors">
                                 01763877777
                             </a>
                         </div>
@@ -148,6 +153,13 @@ export default function Leaderboard({ currentExam, nextExam, previousExams }: Le
                 {/* Header */}
                 <div className="bg-primary text-primary-foreground py-8 md:py-12">
                     <div className="container mx-auto px-4 text-center">
+                        <div className="mb-6">
+                            <img 
+                                src="/UGV-Logo-02.png" 
+                                alt="University of Global Village" 
+                                className="h-16 md:h-20 w-auto mx-auto object-contain brightness-0 invert"
+                            />
+                        </div>
                         <div className="inline-flex items-center gap-2 bg-primary-foreground/10 px-4 py-2 rounded-full mb-4">
                             <Trophy className="w-4 h-4 md:w-5 md:h-5" />
                             <span className="font-semibold text-sm md:text-base">UGV Quiz Merit List</span>
