@@ -11,6 +11,7 @@ Route::get('/exam/{token}/complete', [ExamController::class, 'complete'])->name(
 Route::get('/leaderboard', [ExamController::class, 'leaderboard'])->name('leaderboard');
 
 // Login route - redirects to Filament admin login
-Route::get('/login', function () {
+// Handle both GET and POST to avoid MethodNotAllowedHttpException
+Route::match(['get', 'post'], '/login', function () {
     return redirect('/admin/login');
 })->name('login');
