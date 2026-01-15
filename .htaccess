@@ -1,0 +1,35 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Redirect all requests to the public directory (internal rewrite, URL stays the same)
+    # This allows the Laravel project to work when placed inside public_html
+    
+    # Don't rewrite if already pointing to public directory
+    RewriteCond %{REQUEST_URI} !^/public/
+    
+    # Don't rewrite if the file/directory exists in root (for .htaccess itself)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Internal rewrite to public directory (URL doesn't change in browser)
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Security: Prevent directory listing
+Options -Indexes
+
+# Protect sensitive files and directories
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect sensitive files
+<FilesMatch "(^\.env|^composer\.(json|lock)|^package(-lock)?\.json|^artisan|^\.editorconfig|^\.prettierrc|^\.prettierignore|^eslint\.config\.js|^tsconfig\.json|^vite\.config\.ts|^phpunit\.xml|^pint\.json)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect app, bootstrap, config, database, resources, routes, storage, tests, vendor directories
+RedirectMatch 403 ^/(app|bootstrap|config|database|resources|routes|storage|tests|vendor)/.*$
+
