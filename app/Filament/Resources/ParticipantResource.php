@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Exports\ParticipantExportExporter;
 use App\Filament\Resources\ParticipantResource\Pages;
 use App\Filament\Resources\ParticipantResource\RelationManagers;
+use App\Models\Answer;
 use App\Models\Exam;
 use App\Models\Participant;
 use Filament\Forms;
@@ -212,6 +213,34 @@ class ParticipantResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('recalculateScore')
+                    ->label('Recalculate Score')
+                    ->icon('heroicon-o-calculator')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Recalculate Score')
+                    ->modalDescription('This will recalculate the participant\'s score by counting only correct answers for questions in their paper. Continue?')
+                    ->modalSubmitActionLabel('Recalculate')
+                    ->action(function (Participant $record) {
+                        // Get question IDs that belong to this participant's paper
+                        $participantQuestionIds = $record->participantQuestions()->pluck('question_id');
+                        
+                        // Count only correct answers for questions in participant's paper
+                        $score = Answer::where('participant_id', $record->id)
+                            ->whereIn('question_id', $participantQuestionIds)
+                            ->where('is_correct', true)
+                            ->count();
+                        
+                        // Update the score
+                        $record->update(['score' => $score]);
+                        
+                        \Filament\Notifications\Notification::make()
+                            ->title('Score Recalculated')
+                            ->success()
+                            ->body("Participant's score has been recalculated: {$score} / {$participantQuestionIds->count()}")
+                            ->send();
+                    })
+                    ->visible(fn (Participant $record) => $record->participantQuestions()->count() > 0),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->headerActions([
