@@ -11,6 +11,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -401,6 +402,7 @@ class ExamResource extends Resource
             'create' => Pages\CreateExam::route('/create'),
             'view' => Pages\ViewExam::route('/{record}'),
             'edit' => Pages\EditExam::route('/{record}/edit'),
+            'leaderboard' => Pages\Leaderboard::route('/{record}/leaderboard'),
         ];
     }
 
@@ -421,5 +423,14 @@ class ExamResource extends Resource
     {
         $rankedCount = $record->participants()->whereNotNull('rank')->count();
         return $rankedCount > 0 ? 'success' : 'warning';
+    }
+
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            Pages\ViewExam::class,
+            Pages\EditExam::class,
+            Pages\Leaderboard::class,
+        ]);
     }
 }

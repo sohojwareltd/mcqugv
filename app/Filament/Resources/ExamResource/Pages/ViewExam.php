@@ -15,9 +15,15 @@ class ViewExam extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('viewLeaderboard')
+                ->label('View Leaderboard')
+                ->icon('heroicon-o-trophy')
+                ->color('primary')
+                ->url(fn () => static::getResource()::getUrl('leaderboard', ['record' => $this->record]))
+                ->visible(fn () => $this->record->participants()->whereNotNull('completed_at')->count() > 0),
             Actions\Action::make('calculateLeaderboard')
                 ->label('Calculate Leaderboard')
-                ->icon('heroicon-o-trophy')
+                ->icon('heroicon-o-calculator')
                 ->color('success')
                 ->requiresConfirmation()
                 ->modalHeading('Calculate Leaderboard')
