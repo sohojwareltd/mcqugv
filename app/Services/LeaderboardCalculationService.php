@@ -84,8 +84,13 @@ class LeaderboardCalculationService
      */
     private function calculateParticipantScores(Participant $participant): array
     {
+        // Get question IDs that belong to this participant's paper
+        $participantQuestionIds = $participant->participantQuestions()->pluck('question_id');
+        
         // Get all correct answers with their questions and categories
+        // Only count answers for questions in participant's paper
         $correctAnswers = $participant->answers()
+            ->whereIn('question_id', $participantQuestionIds)
             ->where('is_correct', true)
             ->with(['question.category'])
             ->get();

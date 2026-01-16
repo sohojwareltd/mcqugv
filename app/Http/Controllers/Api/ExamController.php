@@ -211,8 +211,11 @@ class ExamController extends Controller
             return response()->json(['error' => 'Exam already completed'], 403);
         }
 
-        // Calculate score
+        // Calculate score - only count answers for questions in participant's paper
+        $participantQuestionIds = $participant->participantQuestions()->pluck('question_id');
+        
         $score = Answer::where('participant_id', $participant->id)
+            ->whereIn('question_id', $participantQuestionIds)
             ->where('is_correct', true)
             ->count();
 
