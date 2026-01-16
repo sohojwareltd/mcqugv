@@ -72,7 +72,9 @@ class Leaderboard extends Page implements HasTable
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('score')
                     ->label('Score')
-                    ->sortable()
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query->orderBy('calculated_score', $direction);
+                    })
                     ->formatStateUsing(fn ($state, $record) => $state !== null ? $state . ' / ' . $record->participantQuestions()->count() : 'N/A')
                     ->color(fn ($state, $record) => static::getScoreColor($state, $record))
                     ->badge()
@@ -98,7 +100,7 @@ class Leaderboard extends Page implements HasTable
                     })
                     ->toggleable(),
             ])
-            ->defaultSort('merit_position', 'asc')
+            // Don't use defaultSort here - sorting is handled in getTableQuery()
             ->poll('5s') // Refresh every 5 seconds for real-time updates
             ->emptyStateHeading('No participants yet')
             ->emptyStateDescription('Participants will appear here once they complete the exam.')
@@ -110,10 +112,56 @@ class Leaderboard extends Page implements HasTable
     {
         $exam = $this->getRecord();
         
-        return Participant::query()
+        // Category priority order for tie-breaking (matching LeaderboardCalculationService)
+        $categoryPriority = ['math', 'english', 'bangla', 'ict', 'general-knowledge'];
+        
+        $query = Participant::query()
             ->where('exam_id', $exam->id)
             ->whereNotNull('completed_at')
-            ->with(['participantQuestions', 'exam']);
+            ->with(['participantQuestions', 'exam', 'answers.question.category']);
+        
+        // Calculate score (only from participant's paper questions)
+        $query->select('participants.*')
+            ->selectRaw('COALESCE(participants.score, 0) as calculated_score')
+            ->selectRaw('CASE 
+                WHEN participants.started_at IS NOT NULL AND participants.completed_at IS NOT NULL 
+                THEN TIMESTAMPDIFF(SECOND, participants.started_at, participants.completed_at)
+                ELSE 999999999
+            END as calculated_time');
+        
+        // Add category score calculations for tie-breaking
+        // Only count correct answers for questions in participant's paper
+        foreach ($categoryPriority as $index => $categorySlug) {
+            $query->selectRaw("COALESCE((
+                SELECT COUNT(*)
+                FROM answers
+                INNER JOIN participant_questions pq ON answers.question_id = pq.question_id 
+                    AND pq.participant_id = participants.id
+                INNER JOIN questions ON answers.question_id = questions.id
+                INNER JOIN categories ON questions.category_id = categories.id
+                WHERE answers.participant_id = participants.id
+                AND answers.is_correct = 1
+                AND categories.slug = ?
+            ), 0) as category_score_{$index}", [$categorySlug]);
+        }
+        
+        // Primary sort: Score (descending - higher is better)
+        $query->orderBy('calculated_score', 'desc');
+        
+        // Secondary sort: Time (ascending - faster is better)
+        $query->orderBy('calculated_time', 'asc');
+        
+        // Tertiary sort: Category scores in priority order (higher is better)
+        foreach ($categoryPriority as $index => $categorySlug) {
+            $query->orderBy("category_score_{$index}", 'desc');
+        }
+        
+        // Final sort: Use merit_position if available (already includes category scores), then rank, then ID
+        $query->orderByRaw('COALESCE(participants.merit_position, 999999)')
+            ->orderByRaw('COALESCE(participants.rank, 999999)')
+            ->orderBy('participants.id');
+        
+        return $query;
     }
 
     protected static function getScoreColor($state, $record): string
