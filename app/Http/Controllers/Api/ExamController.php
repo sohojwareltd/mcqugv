@@ -24,6 +24,7 @@ class ExamController extends Controller
             'phone' => 'required|string|max:20',
             'group' => 'nullable|string|max:100',
             'hsc_roll' => 'nullable|string|max:50',
+            'hsc_passing_year' => 'nullable|integer|min:2000|max:' . date('Y'),
             'board' => 'nullable|string|max:100',
             'college' => 'nullable|string|max:255',
         ]);
@@ -64,6 +65,21 @@ class ExamController extends Controller
             ], 409);
         }
 
+        // Check if HSC roll already exists for this exam
+        if ($request->hsc_roll) {
+            $existingByHscRoll = Participant::where('exam_id', $exam->id)
+                ->where('hsc_roll', $request->hsc_roll)
+                ->first();
+
+            if ($existingByHscRoll) {
+                return response()->json([
+                    'error' => 'This HSC roll number has already been used for this exam',
+                    'token' => $existingByHscRoll->attempt_token,
+                    'completed' => $existingByHscRoll->isCompleted(),
+                ], 409);
+            }
+        }
+
         // Create participant
         $participant = Participant::create([
             'exam_id' => $exam->id,
@@ -71,6 +87,7 @@ class ExamController extends Controller
             'phone' => $request->phone,
             'group' => $request->group,
             'hsc_roll' => $request->hsc_roll,
+            'hsc_passing_year' => $request->hsc_passing_year,
             'board' => $request->board,
             'college' => $request->college,
             'attempt_token' => Str::random(64),
@@ -117,6 +134,13 @@ class ExamController extends Controller
 
         if ($participant->isCompleted()) {
             return response()->json(['error' => 'Exam already completed'], 403);
+        }
+
+        // Auto-close exam if 10 minutes have passed since start
+        if ($participant->started_at && now()->diffInMinutes($participant->started_at) >= 10) {
+            // Auto-finish the exam
+            $this->autoFinishExam($participant);
+            return response()->json(['error' => 'Exam time has expired'], 403);
         }
 
         $answeredQuestionIds = Answer::where('participant_id', $participant->id)
@@ -172,6 +196,13 @@ class ExamController extends Controller
             return response()->json(['error' => 'Exam already completed'], 403);
         }
 
+        // Auto-close exam if 10 minutes have passed since start
+        if ($participant->started_at && now()->diffInMinutes($participant->started_at) >= 10) {
+            // Auto-finish the exam
+            $this->autoFinishExam($participant);
+            return response()->json(['error' => 'Exam time has expired'], 403);
+        }
+
         // Check if question belongs to participant's paper
         $participantQuestion = ParticipantQuestion::where('participant_id', $participant->id)
             ->where('question_id', $request->question_id)
@@ -211,6 +242,12 @@ class ExamController extends Controller
             return response()->json(['error' => 'Exam already completed'], 403);
         }
 
+        // Auto-close exam if 10 minutes have passed since start
+        if ($participant->started_at && now()->diffInMinutes($participant->started_at) >= 10) {
+            // Auto-finish the exam
+            $this->autoFinishExam($participant);
+        }
+
         // Calculate score - only count answers for questions in participant's paper
         $participantQuestionIds = $participant->participantQuestions()->pluck('question_id');
         
@@ -229,6 +266,29 @@ class ExamController extends Controller
             'score' => $score,
             'total_questions' => $participant->participantQuestions()->count(),
             'result_publish_at' => $participant->exam->result_publish_at?->toIso8601String(),
+        ]);
+    }
+
+    /**
+     * Auto-finish exam when time limit is reached
+     */
+    private function autoFinishExam(Participant $participant): void
+    {
+        if ($participant->isCompleted()) {
+            return;
+        }
+
+        // Calculate score - only count answers for questions in participant's paper
+        $participantQuestionIds = $participant->participantQuestions()->pluck('question_id');
+        
+        $score = Answer::where('participant_id', $participant->id)
+            ->whereIn('question_id', $participantQuestionIds)
+            ->where('is_correct', true)
+            ->count();
+
+        $participant->update([
+            'score' => $score,
+            'completed_at' => now(),
         ]);
     }
 

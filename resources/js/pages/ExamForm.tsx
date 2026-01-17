@@ -36,6 +36,7 @@ export default function ExamForm({ exam }: ExamFormProps) {
         phone: '',
         group: '',
         hsc_roll: '',
+        hsc_passing_year: '',
         board: '',
         college: '',
     });
@@ -244,6 +245,25 @@ export default function ExamForm({ exam }: ExamFormProps) {
                                     placeholder="Enter your HSC roll"
                                     value={formData.hsc_roll}
                                     onChange={(e) => setFormData({ ...formData, hsc_roll: e.target.value })}
+                                    className="h-12"
+                                    required
+                                />
+                            </div>
+
+                            {/* HSC Passing Year */}
+                            <div className="space-y-2">
+                                <Label htmlFor="hscPassingYear" className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                                    HSC Passing Year
+                                </Label>
+                                <Input
+                                    id="hscPassingYear"
+                                    type="number"
+                                    placeholder="e.g., 2024"
+                                    min="2000"
+                                    max={new Date().getFullYear()}
+                                    value={formData.hsc_passing_year}
+                                    onChange={(e) => setFormData({ ...formData, hsc_passing_year: e.target.value })}
                                     className="h-12"
                                     required
                                 />

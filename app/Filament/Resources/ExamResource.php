@@ -221,63 +221,72 @@ class ExamResource extends Resource
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ->width('60px'),
                 Tables\Columns\TextColumn::make('title')
                     ->label('Title')
                     ->sortable()
                     ->searchable()
                     ->weight('medium')
-                    ->limit(50),
-                Tables\Columns\TextColumn::make('start_time')
-                    ->label('Start Time')
-                    ->dateTime('d/m/Y H:i')
-                    ->sortable()
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('end_time')
-                    ->label('End Time')
-                    ->dateTime('d/m/Y H:i')
-                    ->sortable()
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('total_questions')
-                    ->label('Questions')
-                    ->sortable()
-                    ->badge()
-                    ->color('info'),
+                    ->limit(40),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('result_publish_at')
-                    ->label('Results Publish')
+                    ->sortable()
+                    ->width('70px'),
+                Tables\Columns\TextColumn::make('start_time')
+                    ->label('Start')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
-                    ->placeholder('Not set')
-                    ->color(fn ($state) => $state && $state->isPast() ? 'success' : 'warning')
+                    ->width('140px')
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('end_time')
+                    ->label('End')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->width('140px')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('total_questions')
+                    ->label('Q')
+                    ->sortable()
+                    ->badge()
+                    ->color('info')
+                    ->width('60px'),
                 Tables\Columns\TextColumn::make('participants_count')
                     ->label('Participants')
                     ->counts('participants')
                     ->sortable()
                     ->badge()
-                    ->color('success'),
+                    ->color('success')
+                    ->width('100px'),
                 Tables\Columns\TextColumn::make('categoryRules_count')
-                    ->label('Category Rules')
+                    ->label('Rules')
                     ->counts('categoryRules')
                     ->sortable()
                     ->badge()
                     ->color('warning')
-                    ->toggleable(),
+                    ->width('70px')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('result_publish_at')
+                    ->label('Publish')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->placeholder('—')
+                    ->color(fn ($state) => $state && $state->isPast() ? 'success' : 'warning')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created')
-                    ->dateTime()
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Updated')
-                    ->dateTime()
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultPaginationPageOption(25)
+            ->paginationPageOptions([10, 25, 50, 100])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Active Status')

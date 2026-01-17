@@ -14,6 +14,7 @@ class Participant extends Model
         'phone',
         'group',
         'hsc_roll',
+        'hsc_passing_year',
         'board',
         'college',
         'attempt_token',

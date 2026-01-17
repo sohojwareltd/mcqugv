@@ -63,6 +63,13 @@ class ParticipantResource extends Resource
                             ->maxLength(50)
                             ->columnSpan(1),
 
+                        Forms\Components\TextInput::make('hsc_passing_year')
+                            ->label('HSC Passing Year')
+                            ->numeric()
+                            ->minValue(2000)
+                            ->maxValue(now()->year)
+                            ->columnSpan(1),
+
                         Forms\Components\TextInput::make('group')
                             ->label('Group')
                             ->maxLength(50)
@@ -117,59 +124,64 @@ class ParticipantResource extends Resource
                 Tables\Columns\TextColumn::make('rank')
                     ->label('Rank')
                     ->sortable()
-                    ->searchable()
                     ->badge()
                     ->color('primary')
                     ->default('—')
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('merit_position')
-                    ->label('Merit')
-                    ->sortable()
-                    ->badge()
-                    ->color('success')
-                    ->default('—')
-                    ->toggleable(),
+                    ->width('60px'),
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
                     ->sortable()
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->width('60px'),
                 Tables\Columns\TextColumn::make('full_name')
                     ->label('Name')
                     ->sortable()
                     ->searchable()
-                    ->weight('medium'),
+                    ->weight('medium')
+                    ->limit(25),
+                Tables\Columns\TextColumn::make('phone')
+                    ->label('Phone')
+                    ->searchable()
+                    ->copyable()
+                    ->icon('heroicon-m-phone')
+                    ->width('120px'),
+                Tables\Columns\TextColumn::make('hsc_roll')
+                    ->label('HSC Roll')
+                    ->sortable()
+                    ->searchable()
+                    ->width('100px'),
+                Tables\Columns\TextColumn::make('hsc_passing_year')
+                    ->label('Year')
+                    ->sortable()
+                    ->searchable()
+                    ->width('70px'),
+                Tables\Columns\TextColumn::make('group')
+                    ->label('Group')
+                    ->sortable()
+                    ->searchable()
+                    ->badge()
+                    ->width('90px'),
+                Tables\Columns\TextColumn::make('college')
+                    ->label('College')
+                    ->searchable()
+                    ->limit(20)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('exam.title')
                     ->label('Exam')
                     ->sortable()
                     ->searchable()
                     ->badge()
-                    ->color('primary'),
-                Tables\Columns\TextColumn::make('phone')
-                    ->label('Phone')
-                    ->searchable()
-                    ->copyable()
-                    ->icon('heroicon-m-phone'),
-                Tables\Columns\TextColumn::make('hsc_roll')
-                    ->label('HSC Roll')
-                    ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('group')
-                    ->label('Group')
-                    ->sortable()
-                    ->searchable()
-                    ->badge(),
-                Tables\Columns\TextColumn::make('college')
-                    ->label('College')
-                    ->searchable()
+                    ->color('primary')
                     ->limit(30)
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('score')
                     ->label('Score')
                     ->sortable()
-                    ->formatStateUsing(fn ($state, $record) => $state !== null ? $state . ' / ' . $record->participantQuestions()->count() : 'N/A')
+                    ->formatStateUsing(fn ($state, $record) => $state !== null ? $state . '/' . $record->participantQuestions()->count() : 'N/A')
                     ->color(fn ($state, $record) => static::getScoreColor($state, $record))
-                    ->badge(),
+                    ->badge()
+                    ->width('80px'),
                 Tables\Columns\IconColumn::make('completed_at')
                     ->label('Status')
                     ->boolean()
@@ -177,23 +189,26 @@ class ParticipantResource extends Resource
                     ->falseIcon('heroicon-o-clock')
                     ->trueColor('success')
                     ->falseColor('warning')
-                    ->getStateUsing(fn ($record) => $record->isCompleted()),
+                    ->getStateUsing(fn ($record) => $record->isCompleted())
+                    ->width('80px'),
                 Tables\Columns\TextColumn::make('started_at')
                     ->label('Started')
-                    ->dateTime()
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('completed_at')
                     ->label('Completed')
-                    ->dateTime()
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Registered')
-                    ->dateTime()
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultPaginationPageOption(25)
+            ->paginationPageOptions([10, 25, 50, 100])
             ->filters([
                 Tables\Filters\SelectFilter::make('exam_id')
                     ->label('Exam')
@@ -284,6 +299,8 @@ class ParticipantResource extends Resource
                             ->icon('heroicon-m-phone'),
                         Infolists\Components\TextEntry::make('hsc_roll')
                             ->label('HSC Roll'),
+                        Infolists\Components\TextEntry::make('hsc_passing_year')
+                            ->label('HSC Passing Year'),
                         Infolists\Components\TextEntry::make('group')
                             ->label('Group')
                             ->badge(),

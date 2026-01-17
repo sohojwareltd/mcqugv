@@ -23,6 +23,11 @@ class ListParticipants extends ListRecords
     {
         $query = parent::getTableQuery();
         
+        // Only show participants from active exams
+        $query->whereHas('exam', function ($q) {
+            $q->where('is_active', true);
+        });
+        
         // If no participants have rank, sort by created_at desc instead
         if (!Participant::whereNotNull('rank')->exists()) {
             return $query->orderBy('created_at', 'desc');
